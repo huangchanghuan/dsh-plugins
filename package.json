@@ -5,7 +5,7 @@
   "description": "DSH 插件目录静态站（深海鲸皮肤）与每日数据同步",
   "type": "module",
   "scripts": {
-    "build": "python scripts/gen_site.py --out dist-wb --site https://dsh-plugins.app.workbuddy.host/",
+    "build": "python -S scripts/gen_site.py --out dist-wb --site https://dsh-plugins.app.workbuddy.host/",
     "check": "node scripts/check.mjs",
     "list": "node bin/dsh-plugins.mjs list",
     "sync": "node scripts/sync-catalog.mjs",

@@ -24,11 +24,17 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUTDIR = _args.out
 SITE = _args.site
 
-# Clean the output directory so no stale build artifacts survive (build output only).
-if os.path.isdir(OUTDIR):
-    for _entry in os.listdir(OUTDIR):
-        _full = os.path.join(OUTDIR, _entry)
-        shutil.rmtree(_full) if os.path.isdir(_full) else os.remove(_full)
+# Stale artifacts are pruned at the END of the build via a manifest file.
+# Do NOT mass-delete before building: thousands of unlink/rmtree calls trip
+# the host's safe-delete (trash) shim and stall the build for minutes.
+_MANIFEST_PATH = os.path.abspath(OUTDIR) + ".manifest.json"  # next to OUTDIR, not inside (keep publish folder clean)
+_OLD_FILES = set()
+if os.path.isfile(_MANIFEST_PATH):
+    try:
+        with open(_MANIFEST_PATH, encoding="utf-8") as _mf:
+            _OLD_FILES = {x.replace("\\", "/") for x in json.load(_mf)}
+    except Exception:
+        _OLD_FILES = set()
 os.makedirs(OUTDIR, exist_ok=True)
 
 d = json.load(open(_args.catalog, encoding="utf-8"))
@@ -48,6 +54,7 @@ for p in d["plugins"]:
         "l": p.get("language") or "其他", "li": p.get("license") or "NOASSERTION",
         "s": p.get("stars") or 0, "v": pkg.get("version") or "",
         "c": inst, "u": (p.get("pushedAt") or p.get("updatedAt") or "")[:10],
+        "pkg": pkg.get("name") or "", "cm": (p.get("commit") or "")[:12],
     })
 plugins.sort(key=lambda x: (-x["s"], x["r"]))
 langs = sorted({p["l"] for p in plugins if p["l"] != "其他"})
@@ -123,6 +130,7 @@ S = {
 "d_license":"许可证","d_language":"开发语言","d_author":"作者","d_unknown":"未识别",
 "d_note":"收录不代表官方背书或安全审计。安装命令不含固定版本号，执行时获取上游默认分支的最新版本。",
 "d_back":"← 返回插件目录","d_desc_h":"插件介绍","d_none":"该插件暂未填写介绍，详见上游仓库。",
+"d_pkg":"包名","d_commit":"目录快照提交","d_commit_hint":"仅用于标记本次收录时的目录数据版本","d_related_h":"相关插件",
 "about_title":"关于本目录","privacy_title":"隐私说明",
 "about_h2":"关于 DSH Plugins 插件目录",
 "about_body":["DSH Plugins 是 DeepSeek Harness（DSH）社区插件的中英双语目录站，收录 GitHub 上 topic:dsh-plugin 主题下的开源插件，当前共 {total} 个。",
@@ -182,6 +190,7 @@ S = {
 "d_license":"License","d_language":"Language","d_author":"Author","d_unknown":"Unknown",
 "d_note":"Inclusion is not an official endorsement or security audit. Commands carry no pinned version — the latest version from the upstream default branch is fetched at install time.",
 "d_back":"← Back to directory","d_desc_h":"About this plugin","d_none":"The upstream repository has not provided a description yet.",
+"d_pkg":"Package","d_commit":"Catalog snapshot commit","d_commit_hint":"marks the catalog data version captured at inclusion time","d_related_h":"Related plugins",
 "about_title":"About this directory","privacy_title":"Privacy notice",
 "about_h2":"About DSH Plugins Directory",
 "about_body":["DSH Plugins is a bilingual (Chinese/English) directory of DeepSeek Harness (DSH) community plugins — open-source projects tagged topic:dsh-plugin on GitHub, {total} in total.",
@@ -636,6 +645,12 @@ nav.links a.lang{border:1px solid var(--card-br);border-radius:999px;padding:3px
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
 .chip{border:1px solid var(--card-br);background:var(--card);border-radius:999px;padding:3px 12px;font-size:12.5px;color:var(--tx2)}
 .chip b{color:var(--ac);font-weight:700}
+.related{display:flex;gap:10px;flex-wrap:wrap}
+.related a{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--card-br);background:var(--card);border-radius:12px;padding:8px 14px;color:var(--tx);font-size:14px;transition:border-color .15s,transform .15s}
+.related a:hover{border-color:var(--ac);text-decoration:none;transform:translateY(-1px)}
+.related a .rn{font-weight:700}
+.related a .rs{color:var(--star);font-size:12.5px}
+.cm{background:var(--code);border-radius:6px;padding:1px 6px;font-size:12.5px;color:var(--ac);font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
 .desc{margin-top:16px;font-size:15px;color:var(--tx);opacity:.92;white-space:pre-line}
 .dsection{margin-top:22px}
 .dsection h2{font-size:14px;color:var(--tx2);font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px}
@@ -670,6 +685,7 @@ footer .in{max-width:1200px;margin:0 auto;padding:26px 24px;color:var(--tx2);fon
     <div class="dhead"><h1>__NAME__</h1><span class="stars">★ __STARS__</span></div>
     <div class="chips">
       <span class="chip">__D_AUTHOR__ <b><a href="https://github.com/__REPO__" target="_blank" rel="noopener">@__OWNER__</a></b></span>
+      __PKG_CHIP__
       <span class="chip">__D_LANGUAGE__ <b>__LANG__</b></span>
       <span class="chip">__D_LICENSE__ <b>__LICENSE__</b></span>
       <span class="chip">__D_VERSION__ <b>__VERSION__</b></span>
@@ -679,9 +695,10 @@ footer .in{max-width:1200px;margin:0 auto;padding:26px 24px;color:var(--tx2);fon
     <div class="dsection">
       <h2>__D_INSTALL_H__</h2>
       <div class="cmd"><code id="cmd">__CMD__</code><button class="copy" type="button" data-cmd="__CMD__">__COPY__</button></div>
-      <p class="note">__D_COPY_HINT__ · __D_NOTE__</p>
+      <p class="note">__D_COPY_HINT__ · __D_NOTE____COMMIT_HTML__</p>
       <a class="ghbtn" href="https://github.com/__REPO__" target="_blank" rel="noopener">__D_VIEW_SOURCE__</a>
     </div>
+    __RELATED_HTML__
     <div class="actions"><a class="back" href="__HOME____ANCHOR__">__D_BACK__</a></div>
   </div>
 </div>
@@ -732,6 +749,25 @@ def render_detail(p, lang_key):
     alt_en = detail_url(p, "en")
     home = "/en.html" if lang_key == "en" else "/"
     anchor = "#plugins"
+    # rich blocks: package chip / snapshot commit / related plugins
+    pkg_chip = (
+        f'<span class="chip">{esc(L["d_pkg"])} <b>{esc(p["pkg"])}</b></span>' if p["pkg"] else ""
+    )
+    commit_html = (
+        f' · {esc(L["d_commit"])} <code class="cm">{esc(p["cm"])}</code>' if p["cm"] else ""
+    )
+    related_items = [q for q in plugins if q["o"] == p["o"] and q["r"] != p["r"]]
+    fill_pool = [q for q in plugins if q["l"] == p["l"] and q["r"] != p["r"] and q not in related_items]
+    related_items = (related_items + fill_pool)[:6]
+    if related_items:
+        pills = "".join(
+            f'<a href="/{detail_rel(q, lang_key)}"><span class="rn">{esc(q["n"])}</span>'
+            f'<span class="rs">★ {stars_fmt(q["s"])}</span></a>'
+            for q in related_items
+        )
+        related_html = f'<div class="dsection"><h2>{esc(L["d_related_h"])}</h2><div class="related">{pills}</div></div>'
+    else:
+        related_html = ""
     ld = {
         "@context": "https://schema.org",
         "@graph": [
@@ -765,6 +801,7 @@ def render_detail(p, lang_key):
         "__STARS__": stars_fmt(p["s"]), "__LANG__": esc(p["l"]), "__LICENSE__": lic,
         "__VERSION__": ver, "__UPDATED__": upd, "__DESC__": desc,
         "__CMD__": esc(p["c"]), "__COPY__": esc(L["copy"]), "__COPIED__": esc(L["copied"]),
+        "__PKG_CHIP__": pkg_chip, "__COMMIT_HTML__": commit_html, "__RELATED_HTML__": related_html,
         "__FOOTER_L__": L["footer_l"], "__FOOTER_R__": L["footer_r"],
     }
     for k, v in reps.items():
@@ -773,8 +810,11 @@ def render_detail(p, lang_key):
 
 def write_rel(path, content, bom=False):
     full = os.path.join(OUTDIR, path)
-    os.makedirs(os.path.dirname(full), exist_ok=True)
+    os.makedirs(os.path.dirname(full) or OUTDIR, exist_ok=True)
     io.open(full, "w", encoding="utf-8-sig" if bom else "utf-8", newline="\n").write(content)
+    _WRITTEN.add(path.replace(os.sep, "/"))
+
+_WRITTEN = set()
 
 # ---------------- content pages (about / privacy) ----------------
 CONTENT_TPL = '''<!DOCTYPE html>
@@ -989,3 +1029,23 @@ for p in plugins:
     _lines.append(f"- [{p['r']}]({dzh})（[EN]({den})）：★ {p['s']} · {p['l']} · {p['li']} · {dtext}")
 write_rel("llms-full.txt", _intro + "\n".join(_lines) + "\n")
 print("llms-full.txt written")
+
+# ---- prune stale artifacts from previous builds (files no longer generated) ----
+_stale = _OLD_FILES - _WRITTEN
+for _rel in sorted(_stale):
+    _full = os.path.join(OUTDIR, _rel)
+    if os.path.isfile(_full):
+        try:
+            os.remove(_full)
+        except OSError:
+            pass
+for _root, _dirs, _files in os.walk(OUTDIR, topdown=False):
+    if os.path.abspath(_root) != os.path.abspath(OUTDIR) and not os.listdir(_root):
+        try:
+            os.rmdir(_root)
+        except OSError:
+            pass
+with open(_MANIFEST_PATH, "w", encoding="utf-8", newline="\n") as _mf:
+    json.dump(sorted(_WRITTEN), _mf)
+if _stale:
+    print("pruned stale files:", len(_stale))
