@@ -953,6 +953,14 @@ print("about/privacy pages: 4")
 # favicon.svg
 FAVICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🐋</text></svg>'
 write_rel("favicon.svg", FAVICON)
+# Google Search Console verification file (must persist across rebuilds)
+_gsc = "google0696a6ec2609f9be.html"
+_gsc_src = os.path.join(REPO_ROOT, "assets", _gsc)
+with open(_gsc_src, "rb") as _fi:
+    with open(os.path.join(OUTDIR, _gsc), "wb") as _fo:
+        _fo.write(_fi.read())
+_WRITTEN.add(_gsc)
+print("gsc verification file copied")
 _og_src = os.path.join(REPO_ROOT, "assets", "og-image.png")
 with open(_og_src, "rb") as _fi:
     with open(os.path.join(OUTDIR, "og-image.png"), "wb") as _fo:
