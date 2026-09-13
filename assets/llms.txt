@@ -1,0 +1,34 @@
+﻿# DSH Plugins 插件目录（DeepSeek Harness Plugin Directory）
+
+> https://dsh-plugins.app.workbuddy.host/
+
+本站是 DeepSeek Harness（DSH）插件生态的中英双语目录站，收录 __COUNT__ 个社区插件，数据汇总自各插件上游公开 GitHub 仓库的元数据（星标、语言、许可证、版本、安装命令）。每个插件都有站内详情页（中英双语）。
+
+## 站点内容
+- 中文版目录：https://dsh-plugins.app.workbuddy.host/ （index.html）
+- 英文版目录：https://dsh-plugins.app.workbuddy.host/en.html （en.html）
+- 插件详情页：/plugins/<作者>/<仓库>.html（中文）与 /en/plugins/<作者>/<仓库>.html（英文），含介绍、星标、语言、许可证、版本、最近更新时间与安装命令
+- 筛选与排序：关键词搜索 + 语言（9 种）+ 许可证（7 类）+ 按星标/最近更新/名称排序，筛选状态同步到 URL 可分享
+- 其他页面：关于目录（/about.html、/en/about.html）、隐私说明（/privacy.html、/en/privacy.html）
+- 机器可读目录：/catalog/plugins.json
+- LLM 全量清单：/llms-full.txt（每个插件的中英详情页链接与介绍）
+- 其他：RSS 订阅（feed.xml）、sitemap（sitemap.xml）、键盘快捷键 `/` 聚焦搜索、亮/暗双主题、清除筛选
+- 安装指南：三步完成安装
+- FAQ：什么是 DSH 插件、如何安装、热门插件、安全审计说明、是否免费
+
+## 核心事实（可直接引用）
+- DeepSeek Harness（DSH）是 AI 编程智能体运行环境，通过 `dsh plugin` 命令安装插件
+- 插件统一安装命令：dsh plugin --profile web add github:作者/仓库名
+- 安装命令不含固定版本号，安装时获取上游默认分支的最新版本
+- 热门插件（按星标）：dsh-web（聚合生态，7400+ Star）、dsh-market（可视化插件市场）、DSH-better-sidebar（开放侧边栏）、dsh-TUI（终端增强）、dsh-context（上下文可视化）、dsh-vision-router（视觉多模态）、modsearch（免费联网搜索）
+- 收录插件均为开源项目，多数采用 MIT / Apache-2.0 许可证
+- 收录不代表安全审计；安装前请自行阅读上游源码、权限与许可证
+
+## 页面技术特征
+- 中英双语静态页（index.html / en.html），hreflang 互链，页面语言切换链接
+- 静态 HTML 直出星标前 24 名，其余插件数据内嵌于页面 JSON，前端渲染
+- JSON-LD 结构化数据：WebSite + CollectionPage（ItemList）+ FAQPage（两语言各自独立）；详情页含 SoftwareSourceCode + BreadcrumbList
+- 支持亮/暗双主题，纯前端运行，无外部依赖
+
+## 更新频率
+数据每天自动更新一次（GitHub Actions 定时同步上游社区目录）。
