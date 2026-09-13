@@ -85,7 +85,7 @@ def fill(t, o):
 # ---------------- i18n strings ----------------
 S = {
 "zh": {
-"html_lang":"zh-CN","locale":"zh-CN",
+"html_lang":"zh-CN","locale":"zh-CN","alt_locale":"en_US",
 "title":f"DSH Plugins 插件目录 · {total} 个 DeepSeek Harness 插件搜索与安装指南",
 "meta_desc":f"收录 {total} 个 DeepSeek Harness（DSH）社区插件，支持按名称、功能、语言和许可证搜索，一键复制跟随上游最新版本的插件安装命令。星标排行、筛选排序、安装指南与常见问题。",
 "keywords":"DSH 插件, DeepSeek Harness 插件, dsh plugin, DSH 插件市场, DeepSeek 插件推荐, dsh-web, dsh-market, modsearch, dsh-context, AI 编程插件",
@@ -145,7 +145,7 @@ S = {
 "canonical":SITE,
 },
 "en": {
-"html_lang":"en","locale":"en-US",
+"html_lang":"en","locale":"en-US","alt_locale":"zh_CN",
 "title":f"DSH Plugins Directory · Search & Install {total} DeepSeek Harness Plugins",
 "meta_desc":f"Browse {total} DeepSeek Harness (DSH) community plugins. Search by name, feature, language or license, and copy the install command that tracks the upstream default branch. Star rankings, filters, install guide and FAQ.",
 "keywords":"DSH plugins, DeepSeek Harness plugins, dsh plugin, dsh-market, dsh-web, modsearch, dsh-context, AI coding plugins",
@@ -243,7 +243,10 @@ def ld_json(L):
     "@graph": [
         {"@type": "WebSite", "@id": L["canonical"]+"#website", "url": L["canonical"],
          "name": L["og_title"], "alternateName": "DeepSeek Harness Plugin Directory",
-         "description": L["meta_desc"], "inLanguage": L["html_lang"]},
+         "description": L["meta_desc"], "inLanguage": L["html_lang"],
+         "potentialAction": {"@type": "SearchAction",
+            "target": {"@type": "EntryPoint", "urlTemplate": L["canonical"] + "?q={search_term_string}"},
+            "query-input": "required name=search_term_string"}},
         {"@type": "CollectionPage", "url": L["canonical"], "name": L["og_title"],
          "inLanguage": L["html_lang"],
          "mainEntity": {"@type": "ItemList", "numberOfItems": total,
@@ -269,6 +272,7 @@ TPL = '''<!DOCTYPE html>
 <meta name="description" content="__META_DESC__">
 <meta name="keywords" content="__KEYWORDS__">
 <meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="author" content="DSH Plugins 社区">
 <link rel="canonical" href="__CANON__">
 <link rel="alternate" hreflang="zh-CN" href="__SITE__">
 <link rel="alternate" hreflang="en" href="__SITE__en.html">
@@ -276,13 +280,20 @@ TPL = '''<!DOCTYPE html>
 <link rel="alternate" type="application/rss+xml" title="DSH Plugins 最新插件 / Latest Plugins" href="/feed.xml">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="sitemap" type="application/xml" href="/sitemap.xml">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="DSH Plugins 插件目录">
 <meta property="og:locale" content="__LOCALE__">
+<meta property="og:locale:alternate" content="__ALT_LOCALE__">
+<meta property="og:image" content="__SITE__og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="DSH Plugins 插件目录">
 <meta property="og:url" content="__CANON__">
 <meta property="og:title" content="__OG_TITLE__">
 <meta property="og:description" content="__OG_DESC__">
-<meta name="twitter:card" content="summary">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="__SITE__og-image.png">
 <meta name="twitter:title" content="__TW_TITLE__">
 <meta name="twitter:description" content="__TW_DESC__">
 <script type="application/ld+json">__LD__</script>
@@ -552,7 +563,7 @@ def build(lang_key, other_page, other_hreflang):
     L = S[lang_key]
     page = TPL
     reps = {
-        "__HTML_LANG__": L["html_lang"], "__LOCALE__": L["locale"],
+        "__HTML_LANG__": L["html_lang"], "__LOCALE__": L["locale"], "__ALT_LOCALE__": L["alt_locale"],
         "__TITLE__": L["title"], "__META_DESC__": L["meta_desc"], "__KEYWORDS__": L["keywords"],
         "__CANON__": L["canonical"], "__SITE__": SITE,
         "__HOME__": "/en.html" if lang_key == "en" else "/",
@@ -605,18 +616,26 @@ DETAIL_TPL = '''<!DOCTYPE html>
 <title>__TITLE__</title>
 <meta name="description" content="__META_DESC__">
 <meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="author" content="DSH Plugins 社区">
 <link rel="canonical" href="__CANON__">
 <link rel="alternate" hreflang="zh-CN" href="__ALT_ZH__">
 <link rel="alternate" hreflang="en" href="__ALT_EN__">
 <link rel="alternate" hreflang="x-default" href="__ALT_ZH__">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="sitemap" type="application/xml" href="/sitemap.xml">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="DSH Plugins 插件目录">
 <meta property="og:locale" content="__LOCALE__">
+<meta property="og:locale:alternate" content="__ALT_LOCALE__">
+<meta property="og:image" content="__SITE__og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="DSH Plugins 插件目录">
 <meta property="og:url" content="__CANON__">
 <meta property="og:title" content="__TITLE__">
 <meta property="og:description" content="__META_DESC__">
-<meta name="twitter:card" content="summary">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="__SITE__og-image.png">
 <meta name="twitter:title" content="__TITLE__">
 <meta name="twitter:description" content="__META_DESC__">
 <script type="application/ld+json">__LD__</script>
@@ -783,7 +802,7 @@ def render_detail(p, lang_key):
     ld_json_s = json.dumps(ld, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/").replace(":null", ":null")
     page = DETAIL_TPL
     reps = {
-        "__HTML_LANG__": L["html_lang"], "__LOCALE__": L["locale"],
+        "__HTML_LANG__": L["html_lang"], "__LOCALE__": L["locale"], "__ALT_LOCALE__": L["alt_locale"],
         "__TITLE__": title, "__META_DESC__": meta_desc,
         "__CANON__": canonical, "__ALT_ZH__": alt_zh, "__ALT_EN__": alt_en,
         "__LD__": ld_json_s,
@@ -829,6 +848,7 @@ CONTENT_TPL = '''<!DOCTYPE html>
 <link rel="alternate" hreflang="zh-CN" href="__ALT_ZH__">
 <link rel="alternate" hreflang="en" href="__ALT_EN__">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="sitemap" type="application/xml" href="/sitemap.xml">
 <style>
 :root{color-scheme:dark;--bg1:#071522;--bg2:#0d2436;--card:rgba(255,255,255,.045);--card-br:rgba(255,255,255,.09);--tx:#e8f1f8;--tx2:#9db4c4;--ac:#22d3ee;--ac2:#38bdf8;--star:#fbbf24;--code:rgba(34,211,238,.08)}
 [data-theme="light"]{color-scheme:light;--bg1:#eef5fa;--bg2:#dcebf5;--card:#fff;--card-br:#d5e3ee;--tx:#12293b;--tx2:#54728a;--ac:#0891b2;--ac2:#0284c7;--star:#d97706;--code:rgba(8,145,178,.07)}
@@ -933,6 +953,12 @@ print("about/privacy pages: 4")
 # favicon.svg
 FAVICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🐋</text></svg>'
 write_rel("favicon.svg", FAVICON)
+_og_src = os.path.join(REPO_ROOT, "assets", "og-image.png")
+with open(_og_src, "rb") as _fi:
+    with open(os.path.join(OUTDIR, "og-image.png"), "wb") as _fo:
+        _fo.write(_fi.read())
+_WRITTEN.add("og-image.png")
+print("og-image.png copied")
 
 # manifest.webmanifest
 manifest = {
